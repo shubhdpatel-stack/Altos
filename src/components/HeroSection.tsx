@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import heroImage from "@/assets/hero-evtol.jpg";
 
 const HeroSection = () => {
@@ -43,11 +44,14 @@ const HeroSection = () => {
           </p>
 
           <div className="flex flex-wrap gap-4">
-            <a href="#overview" className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-md font-medium hover:opacity-90 transition-opacity">
-              Explore System
+            <Link to="/plan" className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-md font-medium hover:opacity-90 transition-opacity">
+              Plan Flight
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="mt-0.5">
-                <path d="M8 3v10M8 13l4-4M8 13L4 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
+            </Link>
+            <a href="#overview" className="inline-flex items-center gap-2 border border-border text-foreground px-6 py-3 rounded-md font-medium hover:bg-secondary transition-colors">
+              Learn More
             </a>
           </div>
         </motion.div>

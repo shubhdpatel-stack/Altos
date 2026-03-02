@@ -14,7 +14,75 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      flight_intents: {
+        Row: {
+          aircraft_id: string
+          aircraft_type: string
+          altitude_band: string
+          authority_approved: boolean | null
+          conflicts: number | null
+          contingency_landing: string | null
+          created_at: string
+          departure_window_end: string
+          departure_window_start: string
+          destination: string
+          id: string
+          max_altitude: string | null
+          max_speed: string | null
+          operator_name: string
+          origin: string
+          selected_clearance: string | null
+          status: string
+          trajectory_score: number | null
+          updated_at: string
+          weather_risk: string | null
+        }
+        Insert: {
+          aircraft_id: string
+          aircraft_type?: string
+          altitude_band?: string
+          authority_approved?: boolean | null
+          conflicts?: number | null
+          contingency_landing?: string | null
+          created_at?: string
+          departure_window_end: string
+          departure_window_start: string
+          destination: string
+          id?: string
+          max_altitude?: string | null
+          max_speed?: string | null
+          operator_name: string
+          origin: string
+          selected_clearance?: string | null
+          status?: string
+          trajectory_score?: number | null
+          updated_at?: string
+          weather_risk?: string | null
+        }
+        Update: {
+          aircraft_id?: string
+          aircraft_type?: string
+          altitude_band?: string
+          authority_approved?: boolean | null
+          conflicts?: number | null
+          contingency_landing?: string | null
+          created_at?: string
+          departure_window_end?: string
+          departure_window_start?: string
+          destination?: string
+          id?: string
+          max_altitude?: string | null
+          max_speed?: string | null
+          operator_name?: string
+          origin?: string
+          selected_clearance?: string | null
+          status?: string
+          trajectory_score?: number | null
+          updated_at?: string
+          weather_risk?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

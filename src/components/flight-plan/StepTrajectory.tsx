@@ -49,9 +49,9 @@ const StepTrajectory = ({ data, updateData }: Props) => {
               altitude_band: data.altitudeBand,
               departure_window_start: data.departureWindowStart,
               departure_window_end: data.departureWindowEnd,
-              contingency_landing: data.contingencyLanding,
-              max_speed: data.maxSpeed,
-              max_altitude: data.maxAltitude,
+              contingency_landing: "",
+              max_speed: "",
+              max_altitude: "",
             },
           }
         );

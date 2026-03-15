@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import type { FlightPlanData } from "@/pages/FlightPlan";
 
 interface Props {
@@ -5,11 +6,25 @@ interface Props {
   updateData: (d: Partial<FlightPlanData>) => void;
 }
 
+function toMinutes(t: string): number {
+  const [h, m] = t.split(":").map(Number);
+  return h * 60 + m;
+}
+
 const StepIntent = ({ data, updateData }: Props) => {
+  const windowWarning = useMemo(() => {
+    if (!data.departureWindowStart || !data.departureWindowEnd) return null;
+    const s = toMinutes(data.departureWindowStart);
+    const e = toMinutes(data.departureWindowEnd);
+    if (e <= s) return "End time must be after start time.";
+    if (e - s > 10) return "Departure window cannot exceed 10 minutes.";
+    return null;
+  }, [data.departureWindowStart, data.departureWindowEnd]);
+
   return (
     <div className="space-y-6">
       <p className="text-muted-foreground text-sm">
-        Submit a flexible flight intent with a departure time window — not a single fixed time.
+        Submit a flexible flight intent with a departure time window (max 10 minutes).
       </p>
 
       <div className="grid md:grid-cols-2 gap-5">
@@ -35,7 +50,7 @@ const StepIntent = ({ data, updateData }: Props) => {
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-2 md:col-span-2">
           <label className="text-sm font-medium text-foreground">Requested Altitude Band</label>
           <select
             value={data.altitudeBand}
@@ -46,17 +61,6 @@ const StepIntent = ({ data, updateData }: Props) => {
             <option value="mid">Mid (500–1000 ft AGL)</option>
             <option value="high">High (1000–1500 ft AGL)</option>
           </select>
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-foreground">Contingency Landing</label>
-          <input
-            type="text"
-            value={data.contingencyLanding}
-            onChange={(e) => updateData({ contingencyLanding: e.target.value })}
-            placeholder="e.g. Riverside Emergency Pad"
-            className="w-full px-4 py-2.5 rounded-md bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
-          />
         </div>
 
         <div className="space-y-2">
@@ -80,11 +84,11 @@ const StepIntent = ({ data, updateData }: Props) => {
         </div>
       </div>
 
-      <div className="bg-primary/5 border border-primary/20 rounded-md p-4">
-        <p className="text-xs text-primary font-mono">
-          ⏱ Planning across ranges of feasible trajectories — not a single fixed path.
-        </p>
-      </div>
+      {windowWarning && (
+        <div className="bg-destructive/10 border border-destructive/30 rounded-md p-3">
+          <p className="text-xs text-destructive font-mono">{windowWarning}</p>
+        </div>
+      )}
     </div>
   );
 };

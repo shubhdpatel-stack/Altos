@@ -35,7 +35,7 @@ const StepRegistration = ({ data, updateData }: Props) => {
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-2 md:col-span-2">
           <label className="text-sm font-medium text-foreground">Aircraft Type</label>
           <select
             value={data.aircraftType}
@@ -47,34 +47,6 @@ const StepRegistration = ({ data, updateData }: Props) => {
             <option value="hybrid">Hybrid eVTOL</option>
           </select>
         </div>
-
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-foreground">Max Cruise Speed (kts)</label>
-          <input
-            type="number"
-            value={data.maxSpeed}
-            onChange={(e) => updateData({ maxSpeed: e.target.value })}
-            placeholder="e.g. 120"
-            className="w-full px-4 py-2.5 rounded-md bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 font-mono text-sm"
-          />
-        </div>
-
-        <div className="space-y-2 md:col-span-2">
-          <label className="text-sm font-medium text-foreground">Max Service Altitude (ft AGL)</label>
-          <input
-            type="number"
-            value={data.maxAltitude}
-            onChange={(e) => updateData({ maxAltitude: e.target.value })}
-            placeholder="e.g. 1500"
-            className="w-full px-4 py-2.5 rounded-md bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 font-mono text-sm"
-          />
-        </div>
-      </div>
-
-      <div className="bg-primary/5 border border-primary/20 rounded-md p-4">
-        <p className="text-xs text-primary font-mono">
-          ✓ Aircraft validated once — credentials persist across subsequent operations.
-        </p>
       </div>
     </div>
   );

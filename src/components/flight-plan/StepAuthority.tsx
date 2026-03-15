@@ -1,4 +1,3 @@
-import { Check, AlertTriangle } from "lucide-react";
 import type { FlightPlanData } from "@/pages/FlightPlan";
 
 interface Props {
@@ -11,12 +10,13 @@ const StepAuthority = ({ data, updateData }: Props) => {
     data.selectedClearance === "immediate" ? "Immediate Departure" :
     data.selectedClearance === "delayed" ? "Short Delayed Departure" :
     data.selectedClearance === "alt-altitude" ? "Alternate Altitude Band" :
-    data.selectedClearance === "alt-corridor" ? "Alternate Corridor" : "Not selected";
+    data.selectedClearance === "alt-corridor" ? "Alternate Corridor" :
+    data.selectedClearance === "auto-best" ? "Best Available (Auto)" : "—";
 
   return (
     <div className="space-y-6">
       <p className="text-muted-foreground text-sm">
-        Structured, conflict-evaluated trajectory summary for authority review. Read-only visibility into system assumptions.
+        Review your flight summary before authorization.
       </p>
 
       <div className="space-y-4">
@@ -28,11 +28,7 @@ const StepAuthority = ({ data, updateData }: Props) => {
             ["Route", `${data.origin || "—"} → ${data.destination || "—"}`],
             ["Altitude Band", data.altitudeBand.toUpperCase()],
             ["Departure Window", `${data.departureWindowStart || "—"} – ${data.departureWindowEnd || "—"}`],
-            ["Trajectory Score", `${data.trajectoryScore}%`],
-            ["Conflicts", `${data.conflicts}`],
-            ["Weather Risk", data.weatherRisk],
-            ["Selected Clearance", clearanceLabel],
-            ["Contingency", data.contingencyLanding || "—"],
+            ["Clearance", clearanceLabel],
           ].map(([label, value]) => (
             <div key={label} className="flex items-center justify-between px-5 py-3">
               <span className="text-sm text-muted-foreground">{label}</span>
@@ -52,17 +48,10 @@ const StepAuthority = ({ data, updateData }: Props) => {
         <div>
           <p className="text-sm text-foreground font-medium">Authority Acknowledgment</p>
           <p className="text-xs text-muted-foreground mt-0.5">
-            I confirm the constraints and assumptions have been reviewed. Final separation authority remains with regulators and ATC.
+            I confirm the flight details have been reviewed and approve this operation.
           </p>
         </div>
       </div>
-
-      {!data.selectedClearance && (
-        <div className="flex items-center gap-2 text-accent text-xs font-mono">
-          <AlertTriangle className="w-3.5 h-3.5" />
-          No clearance option selected — return to Step 5.4
-        </div>
-      )}
     </div>
   );
 };

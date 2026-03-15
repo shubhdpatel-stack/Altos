@@ -21,37 +21,31 @@ import StepAuthority from "@/components/flight-plan/StepAuthority";
 import StepMonitoring from "@/components/flight-plan/StepMonitoring";
 
 const steps = [
-  { num: "5.1", title: "Registration", icon: UserCheck, description: "Vehicle & Operator Registration" },
-  { num: "5.2", title: "Flight Intent", icon: Send, description: "Flight Intent Submission" },
-  { num: "5.3", title: "Trajectory Analysis", icon: Activity, description: "Trajectory Simulation & Conflict Analysis" },
-  { num: "5.4", title: "Clearances", icon: GitBranch, description: "Multi-Option Clearances" },
-  { num: "5.5", title: "Authority Review", icon: Eye, description: "Authority Interface" },
-  { num: "5.6", title: "Monitoring", icon: Shield, description: "In-Flight Monitoring" },
+  { title: "Registration", icon: UserCheck, description: "Vehicle & Operator Registration" },
+  { title: "Flight Intent", icon: Send, description: "Flight Intent Submission" },
+  { title: "Trajectory", icon: Activity, description: "Trajectory Simulation & Conflict Analysis" },
+  { title: "Clearances", icon: GitBranch, description: "Multi-Option Clearances" },
+  { title: "Authority", icon: Eye, description: "Authority Review" },
+  { title: "Monitoring", icon: Shield, description: "In-Flight Monitoring" },
 ];
 
 export interface FlightPlanData {
-  // Step 1
   aircraftId: string;
   operatorName: string;
   aircraftType: string;
   maxSpeed: string;
   maxAltitude: string;
-  // Step 2
   origin: string;
   destination: string;
   altitudeBand: string;
   departureWindowStart: string;
   departureWindowEnd: string;
   contingencyLanding: string;
-  // Step 3 - generated
   conflicts: number;
   trajectoryScore: number;
   weatherRisk: string;
-  // Step 4
   selectedClearance: string;
-  // Step 5 - review
   authorityApproved: boolean;
-  // Step 6 - monitoring
   monitoringActive: boolean;
 }
 
@@ -113,11 +107,11 @@ const FlightPlan = () => {
             className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span className="text-sm font-mono">Back to Overview</span>
+            <span className="text-sm font-mono">Back</span>
           </button>
           <div className="flex items-center gap-2">
             <Plane className="w-4 h-4 text-primary" />
-            <span className="font-semibold text-sm">Flight Plan Wizard</span>
+            <span className="font-semibold text-sm">Altos — Flight Planner</span>
           </div>
         </div>
       </header>
@@ -130,7 +124,7 @@ const FlightPlan = () => {
               const isActive = i === currentStep;
               const isCompleted = completedSteps.has(i);
               return (
-                <div key={step.num} className="flex items-center">
+                <div key={step.title} className="flex items-center">
                   <button
                     onClick={() => (isCompleted || i <= currentStep) && setCurrentStep(i)}
                     className={`flex flex-col items-center gap-2 group transition-all ${
@@ -185,7 +179,7 @@ const FlightPlan = () => {
             >
               <div className="mb-6">
                 <span className="text-primary font-mono text-xs tracking-widest uppercase">
-                  Step {steps[currentStep].num}
+                  Step {currentStep + 1} of {steps.length}
                 </span>
                 <h2 className="text-2xl md:text-3xl font-bold mt-1">
                   {steps[currentStep].description}

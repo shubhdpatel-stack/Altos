@@ -28,19 +28,19 @@ const HeroSection = () => {
           <div className="flex items-center gap-3 mb-6">
             <div className="h-px w-12 bg-primary" />
             <span className="text-primary font-mono text-sm tracking-widest uppercase">
-              Concept Note
+              Altos Platform
             </span>
           </div>
 
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6 tracking-tight">
-            Pre-Coordinated{" "}
-            <span className="text-gradient-primary">Trajectory Deconfliction</span>{" "}
+            Advanced Low Altitude{" "}
+            <span className="text-gradient-primary">Traffic Operation</span>{" "}
             System
           </h1>
 
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mb-10 leading-relaxed">
-            A software-based pre-coordination system designed for high-frequency
-            eVTOL and rotorcraft operations in mixed airspace environments.
+            A software platform for managing high-frequency
+            eVTOL and rotorcraft operations in mixed airspace environments — with real-time conflict analysis and weather-aware routing.
           </p>
 
           <div className="flex flex-wrap gap-4">

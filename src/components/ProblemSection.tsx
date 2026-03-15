@@ -19,7 +19,7 @@ const ProblemSection = () => {
           className="max-w-2xl mb-16"
         >
           <span className="text-accent font-mono text-sm tracking-widest uppercase mb-4 block">
-            Problem Statement
+            The Challenge
           </span>
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
             Current systems weren't built for urban air mobility

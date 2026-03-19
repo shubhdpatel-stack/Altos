@@ -107,7 +107,11 @@ function applyDarkTheme(map: maplibregl.Map) {
           try { map.setPaintProperty(id, "icon-opacity", 0.25); } catch {}
         }
       } else if (layer.type === "fill-extrusion") {
+        // Hide the style's default flat/low-quality building extrusions;
+        // we replace them with our own hero-bldg/hero-roof layers below.
         map.setPaintProperty(id, "fill-extrusion-opacity", 0);
+      } else if (layer.type === "fill" && lo.includes("building")) {
+        map.setPaintProperty(id, "fill-opacity", 0);
       }
     } catch { /* non-fatal */ }
   });
@@ -239,38 +243,55 @@ export default function LiveMapSection() {
         "star-intensity": 0.2,
       } as any);
 
-      // Find vector tile source
-      const sources  = Object.entries(map.getStyle().sources);
-      const vecEntry = sources.find(([, s]: any) => s.type === "vector");
-      const sourceId = vecEntry?.[0] ?? null;
+      // Find the source used by the style's own building layer
+      const styleLayers = map.getStyle().layers ?? [];
+      const bldgStyleLayer = styleLayers.find(
+        (l: any) => l["source-layer"] === "building" || l["source-layer"] === "buildings"
+      ) as any;
+      const buildingSourceLayer = bldgStyleLayer?.["source-layer"] ?? "building";
+      // Prefer the source from the style's own building layer; fall back to first vector source
+      const vecSources = Object.entries(map.getStyle().sources);
+      const sourceId: string | null =
+        bldgStyleLayer?.source ??
+        (vecSources.find(([, s]: any) => s.type === "vector")?.[0] ?? null);
 
       if (sourceId) {
+        const H: maplibregl.ExpressionSpecification = [
+          "max",
+          ["coalesce", ["get", "render_height"], ["get", "height"], ["get", "building:height"], 8],
+          8,
+        ];
+        const scaledH: maplibregl.ExpressionSpecification = ["*", H, 1.4];
+        const BASE: maplibregl.ExpressionSpecification = [
+          "coalesce", ["get", "render_min_height"], ["get", "min_height"], 0,
+        ];
+
         // 3D building walls
         map.addLayer({
           id: "hero-bldg",
           type: "fill-extrusion",
           source: sourceId,
-          "source-layer": "building",
+          "source-layer": buildingSourceLayer,
           minzoom: 12,
           paint: {
             "fill-extrusion-color":   BUILDING_COLOR,
-            "fill-extrusion-height":  ["*", 1.5, ["coalesce", ["get", "render_height"], ["get", "height"], 4]],
-            "fill-extrusion-base":    ["coalesce", ["get", "render_min_height"], 0],
+            "fill-extrusion-height":  scaledH,
+            "fill-extrusion-base":    BASE,
             "fill-extrusion-opacity": 0.97,
           },
         });
-        // Roof highlights
+        // Roof cap highlights
         map.addLayer({
           id: "hero-roof",
           type: "fill-extrusion",
           source: sourceId,
-          "source-layer": "building",
+          "source-layer": buildingSourceLayer,
           minzoom: 12,
           paint: {
-            "fill-extrusion-color":  ROOF_COLOR,
-            "fill-extrusion-height": ["*", 1.5, ["coalesce", ["get", "render_height"], ["get", "height"], 4]],
-            "fill-extrusion-base":   ["-", ["*", 1.5, ["coalesce", ["get", "render_height"], ["get", "height"], 4]], 1.2],
-            "fill-extrusion-opacity": 0.75,
+            "fill-extrusion-color":   ROOF_COLOR,
+            "fill-extrusion-height":  scaledH,
+            "fill-extrusion-base":    ["-", scaledH, 1.5],
+            "fill-extrusion-opacity": 0.8,
           },
         });
       }

@@ -142,11 +142,11 @@ const DEMO_FLIGHTS = [
 
 // ── NYC city tour waypoints ───────────────────────────────────────────────────
 const CITY_VIEWS = [
-  { center: [-73.9857, 40.7484] as [number,number], zoom: 14.8, pitch: 65, bearing: -15, label: "Midtown Manhattan" },
-  { center: [-74.0132, 40.7062] as [number,number], zoom: 14.5, pitch: 60, bearing: 20, label: "Lower Manhattan" },
-  { center: [-73.9496, 40.6501] as [number,number], zoom: 14.2, pitch: 55, bearing: -30, label: "Brooklyn" },
-  { center: [-73.9442, 40.7282] as [number,number], zoom: 14.4, pitch: 63, bearing: 10, label: "Queens" },
-  { center: [-73.9772, 40.7831] as [number,number], zoom: 14.6, pitch: 62, bearing: -20, label: "Upper West Side" },
+  { center: [-73.9857, 40.7484] as [number,number], zoom: 15.8, pitch: 78, bearing: -15, label: "Midtown Manhattan" },
+  { center: [-74.0132, 40.7062] as [number,number], zoom: 15.5, pitch: 76, bearing: 30,  label: "Lower Manhattan" },
+  { center: [-73.9496, 40.6501] as [number,number], zoom: 15.2, pitch: 72, bearing: -40, label: "Brooklyn" },
+  { center: [-73.9442, 40.7282] as [number,number], zoom: 15.4, pitch: 75, bearing: 20,  label: "Queens" },
+  { center: [-73.9772, 40.7831] as [number,number], zoom: 15.6, pitch: 77, bearing: -25, label: "Upper West Side" },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -155,6 +155,7 @@ export default function LiveMapSection() {
   const mapRef         = useRef<maplibregl.Map | null>(null);
   const animRefs       = useRef<number[]>([]);
   const tourRef        = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const rotateRef      = useRef<number | null>(null);
   const userInteracted = useRef(false);
   const navigate       = useNavigate();
 
@@ -250,12 +251,12 @@ export default function LiveMapSection() {
           type: "fill-extrusion",
           source: sourceId,
           "source-layer": "building",
-          minzoom: 13,
+          minzoom: 12,
           paint: {
             "fill-extrusion-color":   BUILDING_COLOR,
-            "fill-extrusion-height":  ["coalesce", ["get", "render_height"], ["get", "height"], 4],
+            "fill-extrusion-height":  ["*", 1.5, ["coalesce", ["get", "render_height"], ["get", "height"], 4]],
             "fill-extrusion-base":    ["coalesce", ["get", "render_min_height"], 0],
-            "fill-extrusion-opacity": 0.95,
+            "fill-extrusion-opacity": 0.97,
           },
         });
         // Roof highlights
@@ -264,12 +265,12 @@ export default function LiveMapSection() {
           type: "fill-extrusion",
           source: sourceId,
           "source-layer": "building",
-          minzoom: 13,
+          minzoom: 12,
           paint: {
             "fill-extrusion-color":  ROOF_COLOR,
-            "fill-extrusion-height": ["coalesce", ["get", "render_height"], ["get", "height"], 4],
-            "fill-extrusion-base":   ["-", ["coalesce", ["get", "render_height"], ["get", "height"], 4], 0.8],
-            "fill-extrusion-opacity": 0.65,
+            "fill-extrusion-height": ["*", 1.5, ["coalesce", ["get", "render_height"], ["get", "height"], 4]],
+            "fill-extrusion-base":   ["-", ["*", 1.5, ["coalesce", ["get", "render_height"], ["get", "height"], 4]], 1.2],
+            "fill-extrusion-opacity": 0.75,
           },
         });
       }
@@ -313,18 +314,32 @@ export default function LiveMapSection() {
         }, flight.delay);
       });
 
-      // City tour: cycle through views every 12s unless user interacted
+      // Slow continuous rotation when user hasn't interacted
+      let lastTs = 0;
+      const rotateTick = (ts: number) => {
+        if (!userInteracted.current) {
+          const delta = ts - lastTs;
+          if (delta > 16) {
+            map.setBearing((map.getBearing() + 0.03) % 360);
+            lastTs = ts;
+          }
+        }
+        rotateRef.current = requestAnimationFrame(rotateTick);
+      };
+      rotateRef.current = requestAnimationFrame(rotateTick);
+
+      // City tour: cycle through views every 14s unless user interacted
       let viewIdx = 0;
       const doTour = () => {
         if (userInteracted.current) return;
         viewIdx = (viewIdx + 1) % CITY_VIEWS.length;
         const v = CITY_VIEWS[viewIdx];
-        map.flyTo({ center: v.center, zoom: v.zoom, pitch: v.pitch, bearing: v.bearing, duration: 4500, essential: true });
+        map.flyTo({ center: v.center, zoom: v.zoom, pitch: v.pitch, bearing: v.bearing, duration: 5000, essential: true });
         setCityLabel(v.label);
         setCityIdx(viewIdx);
-        tourRef.current = setTimeout(doTour, 12000);
+        tourRef.current = setTimeout(doTour, 14000);
       };
-      tourRef.current = setTimeout(doTour, 12000);
+      tourRef.current = setTimeout(doTour, 14000);
 
       setReady(true);
     });
@@ -332,6 +347,7 @@ export default function LiveMapSection() {
     mapRef.current = map;
     return () => {
       animRefs.current.forEach((id) => cancelAnimationFrame(id));
+      if (rotateRef.current) cancelAnimationFrame(rotateRef.current);
       if (tourRef.current) clearTimeout(tourRef.current);
       map.remove();
       mapRef.current      = null;

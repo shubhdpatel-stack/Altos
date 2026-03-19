@@ -1,8 +1,12 @@
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import heroImage from "@/assets/hero-evtol.jpg";
+import { useAuth } from "@/contexts/AuthContext";
 
 const HeroSection = () => {
+  const { session } = useAuth();
+  const navigate = useNavigate();
+
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden">
       {/* Background image */}
@@ -50,6 +54,12 @@ const HeroSection = () => {
                 <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </Link>
+            <button
+              onClick={() => navigate(session ? "/dashboard" : "/auth")}
+              className="inline-flex items-center gap-2 border border-border text-foreground px-6 py-3 rounded-md font-medium hover:bg-secondary transition-colors"
+            >
+              {session ? "Dashboard" : "Sign In"}
+            </button>
             <a href="#overview" className="inline-flex items-center gap-2 border border-border text-foreground px-6 py-3 rounded-md font-medium hover:bg-secondary transition-colors">
               Learn More
             </a>

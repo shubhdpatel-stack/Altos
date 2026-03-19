@@ -14,6 +14,9 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import type { RouteOptimizerResult } from "@/lib/routeTypes";
+import type { ATMEngineState, WeatherIntelligenceResult, AirspaceScheduleResult, VertiportStatusResult, TrajectoryPredictorResult, FlightDecisionResult } from "@/lib/atmTypes";
 import StepRegistration from "@/components/flight-plan/StepRegistration";
 import StepIntent from "@/components/flight-plan/StepIntent";
 import StepClearance from "@/components/flight-plan/StepClearance";
@@ -46,7 +49,22 @@ export interface FlightPlanData {
   monitoringActive: boolean;
   analysisComplete: boolean;
   analysisLoading: boolean;
+  routeData: RouteOptimizerResult | null;
+  routeLoading: boolean;
+  // ATM Engine
+  atmEngines: ATMEngineState;
+  flightIntentId: string | null;
 }
+
+const initialATMState: ATMEngineState = {
+  weatherIntel: null,
+  airspaceSchedule: null,
+  vertiportStatus: null,
+  trajectoryPredict: null,
+  flightDecision: null,
+  atmLoading: false,
+  atmError: null,
+};
 
 const initialData: FlightPlanData = {
   aircraftId: "",
@@ -66,6 +84,10 @@ const initialData: FlightPlanData = {
   monitoringActive: false,
   analysisComplete: false,
   analysisLoading: false,
+  routeData: null,
+  routeLoading: false,
+  atmEngines: initialATMState,
+  flightIntentId: null,
 };
 
 function validateStep(step: number, data: FlightPlanData): string | null {
@@ -88,8 +110,7 @@ function validateStep(step: number, data: FlightPlanData): string | null {
     }
     case 2:
       if (!data.analysisComplete) return "Analysis is still processing...";
-      if (data.trajectoryScore <= 80 && !data.selectedClearance)
-        return "Please select a clearance option.";
+      // With automated decision, no manual selection needed
       return null;
     case 3:
       if (!data.authorityApproved) return "Authority acknowledgment is required.";
@@ -105,9 +126,19 @@ function toMinutes(t: string): number {
 }
 
 const FlightPlan = () => {
-  const [currentStep, setCurrentStep] = useState(0);
-  const [data, setData] = useState<FlightPlanData>(initialData);
-  const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
+  const { user } = useAuth();
+  const isLoggedIn = !!user;
+
+  // If logged in, start at step 1 and pre-fill registration from user metadata
+  const [currentStep, setCurrentStep] = useState(isLoggedIn ? 1 : 0);
+  const [data, setData] = useState<FlightPlanData>(() => ({
+    ...initialData,
+    aircraftId: user?.user_metadata?.aircraft_id ?? "",
+    operatorName: user?.user_metadata?.operator_name ?? (user?.email?.split("@")[0] ?? ""),
+  }));
+  const [completedSteps, setCompletedSteps] = useState<Set<number>>(
+    isLoggedIn ? new Set([0]) : new Set()
+  );
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -115,47 +146,85 @@ const FlightPlan = () => {
     setData((prev) => ({ ...prev, ...partial }));
   };
 
-  // Run trajectory analysis when moving from Intent to Clearances
-  const runAnalysis = async () => {
-    updateData({ analysisLoading: true, analysisComplete: false });
+  const runATMEngines = async (intentId: string | null, tScore: number, wRisk: string, cCount: number, rData: RouteOptimizerResult | null) => {
+    updateData({ atmEngines: { ...initialATMState, atmLoading: true } });
     try {
-      const { data: response, error } = await supabase.functions.invoke(
-        "trajectory-analysis",
-        {
+      const depStart = data.departureWindowStart
+        ? `${new Date().toISOString().split("T")[0]}T${data.departureWindowStart}:00`
+        : new Date().toISOString();
+
+      // Run weather, airspace, vertiport, trajectory in parallel
+      const [weatherRes, airspaceRes, vertiportRes, trajectoryRes] = await Promise.allSettled([
+        supabase.functions.invoke("weather-intelligence", {
+          body: { origin: data.origin, destination: data.destination, altitude_band: data.altitudeBand },
+        }),
+        supabase.functions.invoke("airspace-scheduler", {
           body: {
+            flight_intent_id: intentId,
             aircraft_id: data.aircraftId,
-            operator_name: data.operatorName,
             aircraft_type: data.aircraftType,
+            altitude_band: data.altitudeBand,
             origin: data.origin,
             destination: data.destination,
-            altitude_band: data.altitudeBand,
-            departure_window_start: data.departureWindowStart,
-            departure_window_end: data.departureWindowEnd,
+            departure_window_start: depStart,
+            departure_window_end: `${new Date().toISOString().split("T")[0]}T${data.departureWindowEnd}:00`,
           },
-        }
-      );
-      if (error) throw new Error(error.message);
+        }),
+        supabase.functions.invoke("vertiport-coordinator", {
+          body: {
+            flight_intent_id: intentId,
+            aircraft_id: data.aircraftId,
+            origin: data.origin,
+            destination: data.destination,
+            departure_time: depStart,
+          },
+        }),
+        supabase.functions.invoke("trajectory-predictor", {
+          body: { flight_intent_id: intentId },
+        }),
+      ]);
 
-      // Calculate best departure time (middle of window)
-      const s = toMinutes(data.departureWindowStart);
-      const bestMin = s + Math.floor((toMinutes(data.departureWindowEnd) - s) / 2);
-      const bestH = String(Math.floor(bestMin / 60)).padStart(2, "0");
-      const bestM = String(bestMin % 60).padStart(2, "0");
+      const weatherIntel = weatherRes.status === "fulfilled" ? (weatherRes.value.data as WeatherIntelligenceResult) : null;
+      const airspaceSchedule = airspaceRes.status === "fulfilled" ? (airspaceRes.value.data as AirspaceScheduleResult) : null;
+      const vertiportStatus = vertiportRes.status === "fulfilled" ? (vertiportRes.value.data as VertiportStatusResult) : null;
+      const trajectoryPredict = trajectoryRes.status === "fulfilled" ? (trajectoryRes.value.data as TrajectoryPredictorResult) : null;
 
+      // Now run the decision engine with all data
+      const { data: decisionRes } = await supabase.functions.invoke("flight-decision-engine", {
+        body: {
+          flight_intent_id: intentId,
+          aircraft_id: data.aircraftId,
+          operator_name: data.operatorName,
+          trajectory_score: tScore,
+          weather_risk: wRisk,
+          conflicts: cCount,
+          route_data: rData,
+          weather_intel: weatherIntel,
+          airspace_schedule: airspaceSchedule,
+          vertiport_status: vertiportStatus,
+          departure_window_start: depStart,
+        },
+      });
+
+      const flightDecision = decisionRes as FlightDecisionResult;
+
+      // Auto-set selectedClearance from decision for downstream steps
+      const clearanceMap = { GO: "auto-best", DELAY: "delayed-departure", REROUTE: "alternate-corridor" };
       updateData({
-        conflicts: response.conflicts,
-        trajectoryScore: response.trajectory_score,
-        weatherRisk: response.weather_risk,
-        bestDepartureTime: `${bestH}:${bestM}`,
-        analysisComplete: true,
-        analysisLoading: false,
-        // Auto-select if score > 80
-        selectedClearance: response.trajectory_score > 80 ? "auto-best" : "",
+        selectedClearance: clearanceMap[flightDecision?.decision ?? "GO"] ?? "auto-best",
+        atmEngines: {
+          weatherIntel,
+          airspaceSchedule,
+          vertiportStatus,
+          trajectoryPredict,
+          flightDecision,
+          atmLoading: false,
+          atmError: null,
+        },
       });
     } catch (e: any) {
-      console.error("Analysis failed:", e);
-      toast({ title: "Analysis failed", description: e.message, variant: "destructive" });
-      updateData({ analysisLoading: false });
+      console.error("ATM engines failed:", e);
+      updateData({ atmEngines: { ...initialATMState, atmLoading: false, atmError: e.message } });
     }
   };
 
@@ -167,9 +236,76 @@ const FlightPlan = () => {
     }
     setCompletedSteps((prev) => new Set([...prev, currentStep]));
 
-    // Trigger analysis when leaving Intent step
+    // Trigger all engines when leaving Intent step
     if (currentStep === 1) {
-      runAnalysis();
+      // Run trajectory analysis first, then ATM engines with results
+      (async () => {
+        updateData({ analysisLoading: true, analysisComplete: false });
+        let tScore = 80, wRisk = "low", cCount = 0, intentId: string | null = null;
+        try {
+          const { data: response, error } = await supabase.functions.invoke("trajectory-analysis", {
+            body: {
+              aircraft_id: data.aircraftId,
+              operator_name: data.operatorName,
+              aircraft_type: data.aircraftType,
+              origin: data.origin,
+              destination: data.destination,
+              altitude_band: data.altitudeBand,
+              departure_window_start: data.departureWindowStart,
+              departure_window_end: data.departureWindowEnd,
+            },
+          });
+          if (error) throw new Error(error.message);
+          tScore = response.trajectory_score;
+          wRisk = response.weather_risk;
+          cCount = response.conflicts;
+          intentId = response.intent_id ?? null;
+
+          const s = toMinutes(data.departureWindowStart);
+          const bestMin = s + Math.floor((toMinutes(data.departureWindowEnd) - s) / 2);
+          const bestH = String(Math.floor(bestMin / 60)).padStart(2, "0");
+          const bestM = String(bestMin % 60).padStart(2, "0");
+
+          updateData({
+            conflicts: cCount,
+            trajectoryScore: tScore,
+            weatherRisk: wRisk,
+            bestDepartureTime: `${bestH}:${bestM}`,
+            analysisComplete: true,
+            analysisLoading: false,
+            flightIntentId: intentId,
+            selectedClearance: tScore > 80 ? "auto-best" : "",
+          });
+        } catch (e: any) {
+          toast({ title: "Analysis failed", description: e.message, variant: "destructive" });
+          updateData({ analysisLoading: false });
+          return;
+        }
+
+        // Run route optimizer and ATM engines in parallel
+        const [routeResult] = await Promise.allSettled([
+          supabase.functions.invoke("route-optimizer", {
+            body: {
+              aircraft_id: data.aircraftId,
+              operator_name: data.operatorName,
+              origin: data.origin,
+              destination: data.destination,
+              altitude_band: data.altitudeBand,
+              departure_window_start: data.departureWindowStart,
+              departure_window_end: data.departureWindowEnd,
+              flight_intent_id: intentId,
+            },
+          }),
+        ]);
+
+        let rData: RouteOptimizerResult | null = null;
+        if (routeResult.status === "fulfilled" && !routeResult.value.error) {
+          rData = routeResult.value.data as RouteOptimizerResult;
+          updateData({ routeData: rData, routeLoading: false });
+        }
+
+        await runATMEngines(intentId, tScore, wRisk, cCount, rData);
+      })();
     }
 
     if (currentStep < steps.length - 1) setCurrentStep(currentStep + 1);
@@ -209,6 +345,8 @@ const FlightPlan = () => {
         <div className="mb-10">
           <div className="flex items-center justify-between max-w-3xl mx-auto">
             {steps.map((step, i) => {
+              // Hide registration step when logged in (it's already pre-filled)
+              if (i === 0 && isLoggedIn) return null;
               const isActive = i === currentStep;
               const isCompleted = completedSteps.has(i);
               return (
@@ -266,7 +404,7 @@ const FlightPlan = () => {
             >
               <div className="mb-6">
                 <span className="text-primary font-mono text-xs tracking-widest uppercase">
-                  Step {currentStep + 1} of {steps.length}
+                  Step {isLoggedIn ? currentStep : currentStep + 1} of {isLoggedIn ? steps.length - 1 : steps.length}
                 </span>
                 <h2 className="text-2xl md:text-3xl font-bold mt-1">
                   {steps[currentStep].description}

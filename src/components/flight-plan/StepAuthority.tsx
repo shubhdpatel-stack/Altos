@@ -6,12 +6,17 @@ interface Props {
 }
 
 const StepAuthority = ({ data, updateData }: Props) => {
-  const clearanceLabel =
-    data.selectedClearance === "immediate" ? "Immediate Departure" :
-    data.selectedClearance === "delayed" ? "Short Delayed Departure" :
-    data.selectedClearance === "alt-altitude" ? "Alternate Altitude Band" :
-    data.selectedClearance === "alt-corridor" ? "Alternate Corridor" :
-    data.selectedClearance === "auto-best" ? "Best Available (Auto)" : "—";
+  const decisionLabel: Record<string, string> = {
+    "auto-best": "GO — Cleared for Departure",
+    "delayed-departure": "DELAY — Departure Held",
+    "alternate-corridor": "REROUTE — Alternate Corridor",
+    // legacy values kept for safety
+    "immediate": "Immediate Departure",
+    "delayed": "Short Delayed Departure",
+    "alt-altitude": "Alternate Altitude Band",
+    "alt-corridor": "Alternate Corridor",
+  };
+  const clearanceLabel = decisionLabel[data.selectedClearance] ?? "—";
 
   return (
     <div className="space-y-6">

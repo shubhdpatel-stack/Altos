@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   UserCheck,
   Send,
@@ -109,8 +109,8 @@ function validateStep(step: number, data: FlightPlanData): string | null {
       return null;
     }
     case 2:
-      if (!data.analysisComplete) return "Analysis is still processing...";
-      // With automated decision, no manual selection needed
+      if (!data.analysisComplete || data.atmEngines.atmLoading) return "Analysis is still processing...";
+      if (!data.atmEngines.flightDecision) return "Decision engine unavailable — check edge function deployment.";
       return null;
     case 3:
       if (!data.authorityApproved) return "Authority acknowledgment is required.";
@@ -128,16 +128,29 @@ function toMinutes(t: string): number {
 const FlightPlan = () => {
   const { user } = useAuth();
   const isLoggedIn = !!user;
+  const [searchParams] = useSearchParams();
+  const testMap = searchParams.get("test") === "map";
 
-  // If logged in, start at step 1 and pre-fill registration from user metadata
-  const [currentStep, setCurrentStep] = useState(isLoggedIn ? 1 : 0);
+  // If ?test=map, jump straight to monitoring with dummy data
+  const [currentStep, setCurrentStep] = useState(testMap ? 4 : isLoggedIn ? 1 : 0);
   const [data, setData] = useState<FlightPlanData>(() => ({
     ...initialData,
-    aircraftId: user?.user_metadata?.aircraft_id ?? "",
-    operatorName: user?.user_metadata?.operator_name ?? (user?.email?.split("@")[0] ?? ""),
+    aircraftId: user?.user_metadata?.aircraft_id ?? (testMap ? "TEST-001" : ""),
+    operatorName: user?.user_metadata?.operator_name ?? (user?.email?.split("@")[0] ?? (testMap ? "Test Pilot" : "")),
+    ...(testMap ? {
+      origin: "New York",
+      destination: "Boston",
+      altitudeBand: "mid",
+      departureWindowStart: "10:00",
+      departureWindowEnd: "10:10",
+      monitoringActive: true,
+      analysisComplete: true,
+      authorityApproved: true,
+      selectedClearance: "auto-best",
+    } : {}),
   }));
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(
-    isLoggedIn ? new Set([0]) : new Set()
+    testMap ? new Set([0, 1, 2, 3, 4]) : isLoggedIn ? new Set([0]) : new Set()
   );
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -428,7 +441,7 @@ const FlightPlan = () => {
             </button>
             <button
               onClick={completeStep}
-              disabled={data.analysisLoading}
+              disabled={data.analysisLoading || data.atmEngines.atmLoading}
               className="flex items-center gap-2 px-5 py-2.5 rounded-md bg-primary text-primary-foreground hover:opacity-90 transition-opacity font-medium disabled:opacity-50"
             >
               {currentStep === steps.length - 1 ? (

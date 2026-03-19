@@ -15,6 +15,7 @@ export default function Auth() {
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [resetSent, setResetSent] = useState(false);
+  const [unconfirmedEmail, setUnconfirmedEmail] = useState("");
   const { session } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -48,6 +49,23 @@ export default function Auth() {
         toast({ title: "Account created", description: "Check your email to confirm, then sign in." });
         setMode("login");
       }
+    } catch (err: any) {
+      if (err.message?.toLowerCase().includes("email not confirmed") || err.code === "email_not_confirmed") {
+        setUnconfirmedEmail(email);
+      } else {
+        toast({ title: "Error", description: err.message, variant: "destructive" });
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resendConfirmation = async () => {
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resend({ type: "signup", email: unconfirmedEmail });
+      if (error) throw error;
+      toast({ title: "Email sent", description: "Confirmation email resent. Check your inbox." });
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
@@ -102,6 +120,36 @@ export default function Auth() {
         transition={{ delay: 0.1 }}
         className="w-full max-w-sm"
       >
+        {/* Email not confirmed banner */}
+        {unconfirmedEmail && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-4 p-4 rounded-xl border border-amber-500/30 bg-amber-500/10 space-y-2"
+          >
+            <p className="text-sm font-medium text-amber-400">Email not confirmed</p>
+            <p className="text-xs text-muted-foreground">
+              Please confirm <span className="font-mono text-foreground">{unconfirmedEmail}</span> before signing in.
+            </p>
+            <div className="flex gap-2 pt-1">
+              <button
+                onClick={resendConfirmation}
+                disabled={loading}
+                className="text-xs text-amber-400 hover:underline disabled:opacity-50"
+              >
+                {loading ? "Sending…" : "Resend confirmation email"}
+              </button>
+              <span className="text-muted-foreground text-xs">·</span>
+              <button
+                onClick={() => setUnconfirmedEmail("")}
+                className="text-xs text-muted-foreground hover:text-foreground"
+              >
+                Dismiss
+              </button>
+            </div>
+          </motion.div>
+        )}
+
         {/* Mode tabs — hidden on reset screen */}
         {mode !== "reset" && (
           <div className="flex mb-6 border border-border rounded-lg overflow-hidden">

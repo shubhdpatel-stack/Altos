@@ -10,6 +10,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { BYPASS_AUTH } from "@/components/AuthGuard";
 
 interface FlightRecord {
   id: string;
@@ -87,11 +88,12 @@ export default function Dashboard() {
   const [decisions, setDecisions] = useState<{ decision: string; count: number }[]>([]);
 
   useEffect(() => {
+    if (BYPASS_AUTH) return;
     if (!authLoading && !user) navigate("/auth", { replace: true });
   }, [user, authLoading, navigate]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user && !BYPASS_AUTH) return;
     supabase
       .from("flight_intents")
       .select("id,aircraft_id,origin,destination,trajectory_score,status,weather_risk,conflicts,created_at,altitude_band")
@@ -189,15 +191,26 @@ export default function Dashboard() {
                 {total > 0 ? `${total} flight${total !== 1 ? "s" : ""} on record` : "No flights submitted yet"}
               </p>
             </div>
-            <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => navigate("/plan")}
-              className="hidden md:flex items-center gap-2 bg-primary text-primary-foreground rounded-xl px-5 py-2.5 text-sm font-medium shadow-lg shadow-primary/20 hover:opacity-90 transition-opacity"
-            >
-              <Plus className="w-4 h-4" />
-              Plan New Flight
-            </motion.button>
+            <div className="hidden md:flex items-center gap-2">
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => navigate("/plan?test=map")}
+                className="flex items-center gap-2 bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 rounded-xl px-4 py-2.5 text-sm font-medium hover:bg-cyan-500/20 transition-colors"
+              >
+                <Zap className="w-4 h-4" />
+                Test 3D Map
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => navigate("/plan")}
+                className="flex items-center gap-2 bg-primary text-primary-foreground rounded-xl px-5 py-2.5 text-sm font-medium shadow-lg shadow-primary/20 hover:opacity-90 transition-opacity"
+              >
+                <Plus className="w-4 h-4" />
+                Plan New Flight
+              </motion.button>
+            </div>
           </motion.div>
 
           {/* Stats grid */}

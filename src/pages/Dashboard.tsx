@@ -145,7 +145,7 @@ const ATM_SYSTEMS = [
   { id: "decision",  label: "Decision Engine",       icon: Zap,    status: "online" },
 ];
 
-const fade = { hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { duration: 0.38, ease: "easeOut" } } };
+const fade = { hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { duration: 0.38, ease: "easeOut" as const } } };
 const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.06 } } };
 
 export default function Dashboard() {

@@ -110,7 +110,7 @@ function applyDarkTheme(map: maplibregl.Map) {
         // Hide the style's default flat/low-quality building extrusions;
         // we replace them with our own hero-bldg/hero-roof layers below.
         map.setPaintProperty(id, "fill-extrusion-opacity", 0);
-      } else if (layer.type === "fill" && lo.includes("building")) {
+      } else if ((layer.type as string) === "fill" && lo.includes("building")) {
         map.setPaintProperty(id, "fill-opacity", 0);
       }
     } catch { /* non-fatal */ }
@@ -235,7 +235,7 @@ export default function LiveMapSection() {
     map.on("load", () => {
       applyDarkTheme(map);
 
-      map.setFog({
+      (map as any).setFog({
         color:           "#040912",
         "high-color":    "#060d1e",
         "horizon-blend": 0.035,

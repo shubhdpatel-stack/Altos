@@ -14,6 +14,161 @@ export type Database = {
   }
   public: {
     Tables: {
+      airspace_segments: {
+        Row: {
+          altitude_band: string
+          capacity_per_hour: number
+          created_at: string | null
+          current_load: number
+          id: string
+          is_no_fly: boolean
+          name: string
+          no_fly_end: string | null
+          no_fly_reason: string | null
+          no_fly_start: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          altitude_band?: string
+          capacity_per_hour?: number
+          created_at?: string | null
+          current_load?: number
+          id?: string
+          is_no_fly?: boolean
+          name: string
+          no_fly_end?: string | null
+          no_fly_reason?: string | null
+          no_fly_start?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          altitude_band?: string
+          capacity_per_hour?: number
+          created_at?: string | null
+          current_load?: number
+          id?: string
+          is_no_fly?: boolean
+          name?: string
+          no_fly_end?: string | null
+          no_fly_reason?: string | null
+          no_fly_start?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      anomalies: {
+        Row: {
+          aircraft_id: string
+          anomaly_type: string
+          description: string
+          detected_at: string | null
+          flight_intent_id: string | null
+          id: string
+          is_active: boolean | null
+          lat: number | null
+          lon: number | null
+          resolved_at: string | null
+          severity: string
+        }
+        Insert: {
+          aircraft_id: string
+          anomaly_type: string
+          description: string
+          detected_at?: string | null
+          flight_intent_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          lat?: number | null
+          lon?: number | null
+          resolved_at?: string | null
+          severity?: string
+        }
+        Update: {
+          aircraft_id?: string
+          anomaly_type?: string
+          description?: string
+          detected_at?: string | null
+          flight_intent_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          lat?: number | null
+          lon?: number | null
+          resolved_at?: string | null
+          severity?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "anomalies_flight_intent_id_fkey"
+            columns: ["flight_intent_id"]
+            isOneToOne: false
+            referencedRelation: "flight_intents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      flight_decisions: {
+        Row: {
+          aircraft_id: string
+          airspace_load: number | null
+          confidence: number
+          created_at: string | null
+          decision: string
+          delay_minutes: number | null
+          departure_time: string | null
+          flight_intent_id: string | null
+          id: string
+          reason: string
+          route_id: string | null
+          simulation_result: Json | null
+          weather_risk: string | null
+        }
+        Insert: {
+          aircraft_id: string
+          airspace_load?: number | null
+          confidence?: number
+          created_at?: string | null
+          decision: string
+          delay_minutes?: number | null
+          departure_time?: string | null
+          flight_intent_id?: string | null
+          id?: string
+          reason: string
+          route_id?: string | null
+          simulation_result?: Json | null
+          weather_risk?: string | null
+        }
+        Update: {
+          aircraft_id?: string
+          airspace_load?: number | null
+          confidence?: number
+          created_at?: string | null
+          decision?: string
+          delay_minutes?: number | null
+          departure_time?: string | null
+          flight_intent_id?: string | null
+          id?: string
+          reason?: string
+          route_id?: string | null
+          simulation_result?: Json | null
+          weather_risk?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flight_decisions_flight_intent_id_fkey"
+            columns: ["flight_intent_id"]
+            isOneToOne: false
+            referencedRelation: "flight_intents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flight_decisions_route_id_fkey"
+            columns: ["route_id"]
+            isOneToOne: false
+            referencedRelation: "routes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       flight_intents: {
         Row: {
           aircraft_id: string
@@ -35,6 +190,7 @@ export type Database = {
           status: string
           trajectory_score: number | null
           updated_at: string
+          user_id: string | null
           weather_risk: string | null
         }
         Insert: {
@@ -57,6 +213,7 @@ export type Database = {
           status?: string
           trajectory_score?: number | null
           updated_at?: string
+          user_id?: string | null
           weather_risk?: string | null
         }
         Update: {
@@ -79,7 +236,360 @@ export type Database = {
           status?: string
           trajectory_score?: number | null
           updated_at?: string
+          user_id?: string | null
           weather_risk?: string | null
+        }
+        Relationships: []
+      }
+      route_patterns: {
+        Row: {
+          altitude_band: string
+          avg_efficiency_score: number | null
+          avg_overall_score: number | null
+          avg_safety_score: number | null
+          avg_traffic_score: number | null
+          avg_weather_score: number | null
+          destination_key: string
+          flight_count: number | null
+          id: string
+          last_updated: string | null
+          origin_key: string
+          preferred_waypoints: Json | null
+        }
+        Insert: {
+          altitude_band: string
+          avg_efficiency_score?: number | null
+          avg_overall_score?: number | null
+          avg_safety_score?: number | null
+          avg_traffic_score?: number | null
+          avg_weather_score?: number | null
+          destination_key: string
+          flight_count?: number | null
+          id?: string
+          last_updated?: string | null
+          origin_key: string
+          preferred_waypoints?: Json | null
+        }
+        Update: {
+          altitude_band?: string
+          avg_efficiency_score?: number | null
+          avg_overall_score?: number | null
+          avg_safety_score?: number | null
+          avg_traffic_score?: number | null
+          avg_weather_score?: number | null
+          destination_key?: string
+          flight_count?: number | null
+          id?: string
+          last_updated?: string | null
+          origin_key?: string
+          preferred_waypoints?: Json | null
+        }
+        Relationships: []
+      }
+      route_score_config: {
+        Row: {
+          id: string
+          min_safe_separation_km: number | null
+          updated_at: string | null
+          weight_efficiency: number | null
+          weight_safety: number | null
+          weight_traffic: number | null
+          weight_weather: number | null
+        }
+        Insert: {
+          id?: string
+          min_safe_separation_km?: number | null
+          updated_at?: string | null
+          weight_efficiency?: number | null
+          weight_safety?: number | null
+          weight_traffic?: number | null
+          weight_weather?: number | null
+        }
+        Update: {
+          id?: string
+          min_safe_separation_km?: number | null
+          updated_at?: string | null
+          weight_efficiency?: number | null
+          weight_safety?: number | null
+          weight_traffic?: number | null
+          weight_weather?: number | null
+        }
+        Relationships: []
+      }
+      routes: {
+        Row: {
+          aircraft_id: string
+          alternate_routes: Json | null
+          altitude_band: string
+          conflict_details: Json | null
+          created_at: string | null
+          destination: string
+          efficiency_score: number | null
+          flight_intent_id: string | null
+          id: string
+          operator_name: string
+          origin: string
+          overall_score: number | null
+          primary_route: Json | null
+          safety_score: number | null
+          selection_reason: string | null
+          status: string | null
+          traffic_score: number | null
+          updated_at: string | null
+          weather_conditions: Json | null
+          weather_risk: string | null
+          weather_score: number | null
+        }
+        Insert: {
+          aircraft_id: string
+          alternate_routes?: Json | null
+          altitude_band: string
+          conflict_details?: Json | null
+          created_at?: string | null
+          destination: string
+          efficiency_score?: number | null
+          flight_intent_id?: string | null
+          id?: string
+          operator_name: string
+          origin: string
+          overall_score?: number | null
+          primary_route?: Json | null
+          safety_score?: number | null
+          selection_reason?: string | null
+          status?: string | null
+          traffic_score?: number | null
+          updated_at?: string | null
+          weather_conditions?: Json | null
+          weather_risk?: string | null
+          weather_score?: number | null
+        }
+        Update: {
+          aircraft_id?: string
+          alternate_routes?: Json | null
+          altitude_band?: string
+          conflict_details?: Json | null
+          created_at?: string | null
+          destination?: string
+          efficiency_score?: number | null
+          flight_intent_id?: string | null
+          id?: string
+          operator_name?: string
+          origin?: string
+          overall_score?: number | null
+          primary_route?: Json | null
+          safety_score?: number | null
+          selection_reason?: string | null
+          status?: string | null
+          traffic_score?: number | null
+          updated_at?: string | null
+          weather_conditions?: Json | null
+          weather_risk?: string | null
+          weather_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "routes_flight_intent_id_fkey"
+            columns: ["flight_intent_id"]
+            isOneToOne: false
+            referencedRelation: "flight_intents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      time_slots: {
+        Row: {
+          aircraft_id: string
+          created_at: string | null
+          flight_intent_id: string | null
+          id: string
+          priority: number
+          segment_id: string | null
+          slot_end: string
+          slot_start: string
+          status: string
+        }
+        Insert: {
+          aircraft_id: string
+          created_at?: string | null
+          flight_intent_id?: string | null
+          id?: string
+          priority?: number
+          segment_id?: string | null
+          slot_end: string
+          slot_start: string
+          status?: string
+        }
+        Update: {
+          aircraft_id?: string
+          created_at?: string | null
+          flight_intent_id?: string | null
+          id?: string
+          priority?: number
+          segment_id?: string | null
+          slot_end?: string
+          slot_start?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_slots_flight_intent_id_fkey"
+            columns: ["flight_intent_id"]
+            isOneToOne: false
+            referencedRelation: "flight_intents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_slots_segment_id_fkey"
+            columns: ["segment_id"]
+            isOneToOne: false
+            referencedRelation: "airspace_segments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trajectory_updates: {
+        Row: {
+          aircraft_id: string
+          altitude_ft: number
+          battery_pct: number | null
+          deviation_meters: number | null
+          flight_intent_id: string | null
+          heading_deg: number | null
+          id: string
+          is_on_route: boolean | null
+          lat: number
+          lon: number
+          recorded_at: string | null
+          speed_kmh: number
+        }
+        Insert: {
+          aircraft_id: string
+          altitude_ft?: number
+          battery_pct?: number | null
+          deviation_meters?: number | null
+          flight_intent_id?: string | null
+          heading_deg?: number | null
+          id?: string
+          is_on_route?: boolean | null
+          lat: number
+          lon: number
+          recorded_at?: string | null
+          speed_kmh?: number
+        }
+        Update: {
+          aircraft_id?: string
+          altitude_ft?: number
+          battery_pct?: number | null
+          deviation_meters?: number | null
+          flight_intent_id?: string | null
+          heading_deg?: number | null
+          id?: string
+          is_on_route?: boolean | null
+          lat?: number
+          lon?: number
+          recorded_at?: string | null
+          speed_kmh?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trajectory_updates_flight_intent_id_fkey"
+            columns: ["flight_intent_id"]
+            isOneToOne: false
+            referencedRelation: "flight_intents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vertiport_slots: {
+        Row: {
+          aircraft_id: string
+          created_at: string | null
+          delay_minutes: number | null
+          flight_intent_id: string | null
+          id: string
+          scheduled_time: string
+          slot_type: string
+          status: string
+          vertiport_id: string | null
+        }
+        Insert: {
+          aircraft_id: string
+          created_at?: string | null
+          delay_minutes?: number | null
+          flight_intent_id?: string | null
+          id?: string
+          scheduled_time: string
+          slot_type: string
+          status?: string
+          vertiport_id?: string | null
+        }
+        Update: {
+          aircraft_id?: string
+          created_at?: string | null
+          delay_minutes?: number | null
+          flight_intent_id?: string | null
+          id?: string
+          scheduled_time?: string
+          slot_type?: string
+          status?: string
+          vertiport_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vertiport_slots_flight_intent_id_fkey"
+            columns: ["flight_intent_id"]
+            isOneToOne: false
+            referencedRelation: "flight_intents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vertiport_slots_vertiport_id_fkey"
+            columns: ["vertiport_id"]
+            isOneToOne: false
+            referencedRelation: "vertiports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vertiports: {
+        Row: {
+          city: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean
+          lat: number
+          lon: number
+          max_arrivals_per_hour: number
+          max_departures_per_hour: number
+          name: string
+          pad_count: number
+          updated_at: string | null
+        }
+        Insert: {
+          city?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean
+          lat?: number
+          lon?: number
+          max_arrivals_per_hour?: number
+          max_departures_per_hour?: number
+          name: string
+          pad_count?: number
+          updated_at?: string | null
+        }
+        Update: {
+          city?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean
+          lat?: number
+          lon?: number
+          max_arrivals_per_hour?: number
+          max_departures_per_hour?: number
+          name?: string
+          pad_count?: number
+          updated_at?: string | null
         }
         Relationships: []
       }

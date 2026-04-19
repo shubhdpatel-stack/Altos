@@ -263,12 +263,29 @@ const StepMonitoring = ({ data, updateData }: Props) => {
   const [flowEfficiency, setFlowEfficiency] = useState(100);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const origin:      [number, number] = getCoords(data.origin,      [-73.985, 40.748]);
-  const destination: [number, number] = getCoords(data.destination, [-73.94,  40.795]);
+  const [origin, setOrigin]           = useState<[number, number]>([-73.985, 40.748]);
+  const [destination, setDestination] = useState<[number, number]>([-73.94, 40.795]);
+  const [coordsResolved, setCoordsResolved] = useState(false);
+
+  // Resolve real lat/lon for both endpoints (Nominatim async fallback)
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const [o, d] = await Promise.all([
+        geocode(data.origin, [-73.985, 40.748]),
+        geocode(data.destination, [-73.94, 40.795]),
+      ]);
+      if (cancelled) return;
+      setOrigin(o);
+      setDestination(d);
+      setCoordsResolved(true);
+    })();
+    return () => { cancelled = true; };
+  }, [data.origin, data.destination]);
 
   // ── Map init ───────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!mapContainer.current || !data.monitoringActive) return;
+    if (!mapContainer.current || !data.monitoringActive || !coordsResolved) return;
     if (mapRef.current) return;
 
     injectStyles();

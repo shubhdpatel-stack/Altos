@@ -83,12 +83,12 @@ function LocationInput({
       if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
         setOpen(false);
         // If user typed something but didn't pick — reset to last confirmed
-        if (!confirmed) { setInputVal(value); }
+        if (!confirmed) { setInputVal(displayValue(value)); }
       }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
-  }, [confirmed, value]);
+  }, [confirmed, displayValue, value]);
 
   const select = (item: NominatimResult) => {
     // Use a clean short name: first two comma-separated parts

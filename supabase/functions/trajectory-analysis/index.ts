@@ -20,14 +20,47 @@ interface FlightIntent {
   max_altitude: string;
 }
 
-// Simple coordinate lookup for common locations (expandable)
+// Coordinate lookup with quick fallback table; falls back to Nominatim geocoding for anything else.
 const LOCATION_COORDS: Record<string, { lat: number; lon: number }> = {
-  default: { lat: 40.7128, lon: -74.006 }, // NYC default
+  "new york": { lat: 40.748, lon: -73.985 },
+  "nyc":      { lat: 40.748, lon: -73.985 },
+  "boston":   { lat: 42.361, lon: -71.057 },
+  "chicago":  { lat: 41.883, lon: -87.623 },
+  "los angeles": { lat: 34.052, lon: -118.243 },
+  "san francisco": { lat: 37.774, lon: -122.419 },
+  "miami":    { lat: 25.761, lon: -80.191 },
+  "seattle":  { lat: 47.606, lon: -122.332 },
+  "london":   { lat: 51.509, lon: -0.118 },
+  "paris":    { lat: 48.864, lon: 2.349 },
+  "tokyo":    { lat: 35.69,  lon: 139.692 },
+  "default":  { lat: 40.7128, lon: -74.006 },
 };
 
-function getCoords(location: string): { lat: number; lon: number } {
+async function getCoords(location: string): Promise<{ lat: number; lon: number }> {
+  if (!location) return LOCATION_COORDS["default"];
+  // Tagged "name @ lat,lon"
+  const tagged = location.match(/@\s*(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\s*$/);
+  if (tagged) {
+    const lat = parseFloat(tagged[1]);
+    const lon = parseFloat(tagged[2]);
+    if (!Number.isNaN(lat) && !Number.isNaN(lon)) return { lat, lon };
+  }
   const key = location.toLowerCase().trim();
-  return LOCATION_COORDS[key] || LOCATION_COORDS["default"];
+  for (const [k, v] of Object.entries(LOCATION_COORDS)) {
+    if (k !== "default" && key.includes(k)) return v;
+  }
+  // Nominatim fallback for unknown addresses
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(location)}`,
+      { headers: { "User-Agent": "Altos-ATM/1.0", "Accept-Language": "en" } }
+    );
+    const arr = await res.json();
+    if (Array.isArray(arr) && arr[0]?.lat && arr[0]?.lon) {
+      return { lat: parseFloat(arr[0].lat), lon: parseFloat(arr[0].lon) };
+    }
+  } catch (_e) { /* fall through */ }
+  return LOCATION_COORDS["default"];
 }
 
 function timeToMinutes(t: string): number {
@@ -172,7 +205,7 @@ Deno.serve(async (req) => {
     }
 
     // 3. Fetch real-time weather from Open-Meteo (free, no API key)
-    const coords = getCoords(intent.origin);
+    const coords = await getCoords(intent.origin);
     const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${coords.lat}&longitude=${coords.lon}&current=temperature_2m,wind_speed_10m,wind_gusts_10m,precipitation,visibility,weather_code&hourly=visibility,wind_speed_80m,wind_gusts_10m,precipitation_probability&forecast_days=1&timezone=auto`;
 
     let weatherData: any = null;

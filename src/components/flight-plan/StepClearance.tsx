@@ -10,9 +10,10 @@ import TrajectoryConflictAlert from "@/components/atm/TrajectoryConflictAlert";
 interface Props {
   data: FlightPlanData;
   updateData: (d: Partial<FlightPlanData>) => void;
+  onSelectRoute?: (routeId: string) => void | Promise<void>;
 }
 
-const StepClearance = ({ data }: Props) => {
+const StepClearance = ({ data, onSelectRoute }: Props) => {
   const { atmEngines } = data;
   const loading = data.analysisLoading || atmEngines.atmLoading;
 

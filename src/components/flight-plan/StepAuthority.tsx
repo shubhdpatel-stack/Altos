@@ -3,9 +3,10 @@ import type { FlightPlanData } from "@/pages/FlightPlan";
 interface Props {
   data: FlightPlanData;
   updateData: (d: Partial<FlightPlanData>) => void;
+  onApprove?: () => void | Promise<void>;
 }
 
-const StepAuthority = ({ data, updateData }: Props) => {
+const StepAuthority = ({ data, updateData, onApprove }: Props) => {
   const decisionLabel: Record<string, string> = {
     "auto-best": "GO — Cleared for Departure",
     "delayed-departure": "DELAY — Departure Held",

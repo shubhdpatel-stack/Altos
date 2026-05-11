@@ -169,7 +169,12 @@ const RouteOptimizerCard = ({ routeData, routeLoading, selectedRouteId, onSelect
                 className="overflow-hidden space-y-3"
               >
                 {alternate_routes.map((route) => (
-                  <AlternateCard key={route.id} route={route} />
+                  <AlternateCard
+                    key={route.id}
+                    route={route}
+                    selected={selectedRouteId === route.id}
+                    onSelect={() => onSelectRoute?.(route.id)}
+                  />
                 ))}
               </motion.div>
             )}

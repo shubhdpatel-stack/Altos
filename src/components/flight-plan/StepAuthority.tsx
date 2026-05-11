@@ -47,7 +47,10 @@ const StepAuthority = ({ data, updateData, onApprove }: Props) => {
         <input
           type="checkbox"
           checked={data.authorityApproved}
-          onChange={(e) => updateData({ authorityApproved: e.target.checked })}
+          onChange={(e) => {
+            updateData({ authorityApproved: e.target.checked });
+            if (e.target.checked) onApprove?.();
+          }}
           className="mt-1 accent-[hsl(175,70%,45%)]"
         />
         <div>

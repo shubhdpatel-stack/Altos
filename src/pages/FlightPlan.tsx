@@ -440,8 +440,8 @@ const FlightPlan = () => {
   const stepComponents = [
     <StepRegistration data={data} updateData={updateData} />,
     <StepIntent data={data} updateData={updateData} />,
-    <StepClearance data={data} updateData={updateData} />,
-    <StepAuthority data={data} updateData={updateData} />,
+    <StepClearance data={data} updateData={updateData} onSelectRoute={applyRouteSelection} />,
+    <StepAuthority data={data} updateData={updateData} onApprove={persistRoutePattern} />,
     <StepMonitoring data={data} updateData={updateData} />,
   ];
 

@@ -51,6 +51,7 @@ export interface FlightPlanData {
   analysisLoading: boolean;
   routeData: RouteOptimizerResult | null;
   routeLoading: boolean;
+  selectedRouteId: string | null;
   // ATM Engine
   atmEngines: ATMEngineState;
   flightIntentId: string | null;
@@ -86,6 +87,7 @@ const initialData: FlightPlanData = {
   analysisLoading: false,
   routeData: null,
   routeLoading: false,
+  selectedRouteId: null,
   atmEngines: initialATMState,
   flightIntentId: null,
 };
@@ -110,7 +112,6 @@ function validateStep(step: number, data: FlightPlanData): string | null {
     }
     case 2:
       if (!data.analysisComplete || data.atmEngines.atmLoading) return "Analysis is still processing...";
-      if (!data.atmEngines.flightDecision) return "Decision engine unavailable — check edge function deployment.";
       return null;
     case 3:
       if (!data.authorityApproved) return "Authority acknowledgment is required.";

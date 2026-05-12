@@ -1,49 +1,61 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ─────────────────────────────────────────────────────────────────
+   ALTOS — Premium monochrome design system
+   Pure black canvas, off-white accents, surgical contrast.
+   ───────────────────────────────────────────────────────────────── */
+
 @layer base {
   :root {
-    --background: 220 25% 6%;
-    --foreground: 200 20% 90%;
+    --background: 0 0% 3%;
+    --foreground: 0 0% 96%;
 
-    --card: 220 20% 10%;
-    --card-foreground: 200 20% 90%;
+    --card: 0 0% 6%;
+    --card-foreground: 0 0% 96%;
 
-    --popover: 220 20% 10%;
-    --popover-foreground: 200 20% 90%;
+    --popover: 0 0% 5%;
+    --popover-foreground: 0 0% 96%;
 
-    --primary: 175 70% 45%;
-    --primary-foreground: 220 25% 6%;
+    /* Primary = bright white (the brand voice) */
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 4%;
 
-    --secondary: 220 15% 16%;
-    --secondary-foreground: 200 20% 80%;
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 0 0% 90%;
 
-    --muted: 220 15% 14%;
-    --muted-foreground: 215 15% 50%;
+    --muted: 0 0% 9%;
+    --muted-foreground: 0 0% 55%;
 
-    --accent: 35 90% 55%;
-    --accent-foreground: 220 25% 6%;
+    --accent: 0 0% 100%;
+    --accent-foreground: 0 0% 4%;
 
-    --destructive: 0 70% 50%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 70% 55%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 220 15% 18%;
-    --input: 220 15% 18%;
-    --ring: 175 70% 45%;
+    --border: 0 0% 14%;
+    --input: 0 0% 14%;
+    --ring: 0 0% 98%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
-    --sidebar-background: 220 20% 8%;
-    --sidebar-foreground: 200 20% 90%;
-    --sidebar-primary: 175 70% 45%;
-    --sidebar-primary-foreground: 220 25% 6%;
-    --sidebar-accent: 220 15% 14%;
-    --sidebar-accent-foreground: 200 20% 90%;
-    --sidebar-border: 220 15% 18%;
-    --sidebar-ring: 175 70% 45%;
+    /* Premium gradients & shadows */
+    --gradient-radial: radial-gradient(circle at 50% 0%, hsl(0 0% 14% / 0.6), transparent 60%);
+    --gradient-mono: linear-gradient(135deg, hsl(0 0% 100%) 0%, hsl(0 0% 70%) 100%);
+    --shadow-elev: 0 30px 80px -30px hsl(0 0% 0% / 0.9), 0 8px 24px -8px hsl(0 0% 0% / 0.6);
+    --shadow-glow: 0 0 60px -10px hsl(0 0% 100% / 0.18);
+
+    --sidebar-background: 0 0% 4%;
+    --sidebar-foreground: 0 0% 90%;
+    --sidebar-primary: 0 0% 98%;
+    --sidebar-primary-foreground: 0 0% 4%;
+    --sidebar-accent: 0 0% 9%;
+    --sidebar-accent-foreground: 0 0% 96%;
+    --sidebar-border: 0 0% 14%;
+    --sidebar-ring: 0 0% 98%;
   }
 }
 
@@ -52,28 +64,104 @@
     @apply border-border;
   }
 
-  body {
+  html, body {
     @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "ss01", "cv11";
+    -webkit-font-smoothing: antialiased;
   }
+
+  /* Refined selection */
+  ::selection {
+    background: hsl(var(--foreground));
+    color: hsl(var(--background));
+  }
+
+  /* Slim, almost invisible scrollbar — feels native-app */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: hsl(0 0% 18%); border-radius: 999px; }
+  ::-webkit-scrollbar-thumb:hover { background: hsl(0 0% 30%); }
 }
 
 @layer utilities {
-  .text-gradient-primary {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-[hsl(200,80%,60%)];
+  .text-gradient-mono {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(0 0% 60%) 100%);
   }
 
   .glass-card {
-    @apply bg-card/60 backdrop-blur-xl border border-border/50;
+    background: hsl(0 0% 8% / 0.6);
+    backdrop-filter: blur(24px) saturate(150%);
+    -webkit-backdrop-filter: blur(24px) saturate(150%);
+    border: 1px solid hsl(0 0% 100% / 0.06);
   }
 
-  .glow-primary {
-    box-shadow: 0 0 40px -10px hsl(175 70% 45% / 0.3);
+  .glass-panel {
+    background: hsl(0 0% 6% / 0.75);
+    backdrop-filter: blur(32px) saturate(160%);
+    -webkit-backdrop-filter: blur(32px) saturate(160%);
+    border: 1px solid hsl(0 0% 100% / 0.08);
+    box-shadow: var(--shadow-elev);
+  }
+
+  .glow-soft {
+    box-shadow: var(--shadow-glow);
   }
 
   .grid-pattern {
-    background-image: 
-      linear-gradient(hsl(220 15% 18% / 0.5) 1px, transparent 1px),
-      linear-gradient(90deg, hsl(220 15% 18% / 0.5) 1px, transparent 1px);
-    background-size: 60px 60px;
+    background-image:
+      linear-gradient(hsl(0 0% 100% / 0.025) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(0 0% 100% / 0.025) 1px, transparent 1px);
+    background-size: 64px 64px;
+    mask-image: radial-gradient(ellipse at center, black 40%, transparent 80%);
+  }
+
+  .noise {
+    position: relative;
+  }
+  .noise::after {
+    content: "";
+    position: absolute; inset: 0;
+    pointer-events: none;
+    opacity: 0.04;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  }
+
+  /* App-like reveal animations */
+  .animate-fade-in {
+    animation: altos-fade-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .animate-rise {
+    animation: altos-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .animate-scale-in {
+    animation: altos-scale-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  @keyframes altos-fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  @keyframes altos-rise {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes altos-scale-in {
+    from { opacity: 0; transform: scale(0.96); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  @keyframes altos-shimmer {
+    0%   { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  .shimmer-text {
+    background: linear-gradient(90deg, hsl(0 0% 60%) 0%, hsl(0 0% 100%) 50%, hsl(0 0% 60%) 100%);
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: altos-shimmer 6s linear infinite;
   }
 }

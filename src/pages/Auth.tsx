@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plane, Mail, Lock, ArrowRight, Eye, EyeOff, User, Hash } from "lucide-react";
+import { Mail, Lock, ArrowRight, Eye, EyeOff, User, Hash } from "lucide-react";
+import Logo from "@/components/Logo";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -116,11 +117,9 @@ export default function Auth() {
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center gap-2 mb-10"
+        className="mb-10"
       >
-        <Plane className="w-6 h-6 text-primary" />
-        <span className="font-bold text-xl tracking-tight">Altos</span>
-        <span className="text-xs font-mono text-muted-foreground ml-1 border border-border px-1.5 py-0.5 rounded">UTM</span>
+        <Logo size={42} showWordmark />
       </motion.div>
 
       <motion.div

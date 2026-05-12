@@ -296,6 +296,64 @@ const StepMonitoring = ({ data, updateData }: Props) => {
   const [destination, setDestination] = useState<[number, number]>([-73.94, 40.795]);
   const [coordsResolved, setCoordsResolved] = useState(false);
 
+  // ── HUD state ────────────────────────────────────────────────────────────
+  const [heading, setHeading]   = useState(0);
+  const [speedKmh, setSpeedKmh] = useState(0);
+  const [povMode, setPovMode]   = useState<PovMode>("hyb");
+  const [autoPov, setAutoPov]   = useState(true);
+  const [driftClock, setDriftClock] = useState<number | null>(null);
+  const povRef            = useRef<PovMode>("hyb");
+  const lastPovChangeRef  = useRef<number>(0);
+  const lastHeadingRef    = useRef<number>(0);
+  const lastHeadingTsRef  = useRef<number>(0);
+  const tacRevertTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const changePov = (next: PovMode, manual = false) => {
+    const now = performance.now();
+    if (!manual && now - lastPovChangeRef.current < POV_COOLDOWN_MS) return;
+    if (povRef.current === next) return;
+    povRef.current = next;
+    lastPovChangeRef.current = now;
+    setPovMode(next);
+  };
+
+  // Wind speed (best-effort from weather intel)
+  const windSpeed = data.atmEngines?.weatherIntel?.origin_weather?.wind_speed ?? null;
+
+  // Compute clock-code drift direction from current pos / heading vs nearest route waypoint
+  const computeDriftClock = (
+    pos: [number, number],
+    nearestPt: [number, number],
+    headingDeg: number,
+  ): number => {
+    const brg = calcBearing(pos, nearestPt);
+    let rel = (brg - headingDeg + 360) % 360;        // 0..360 relative to nose
+    // Map 0..360 → 12 clock positions (12 o'clock = forward)
+    const slot = Math.round(rel / 30);
+    const clk = ((slot - 0 + 11) % 12) + 1;          // 1..12, 12 = forward
+    return clk === 0 ? 12 : clk;
+  };
+
+  // Adaptive POV — detect sharp turn over ~1.5s window, switch to TAC briefly
+  const evaluateAutoPov = (newHeading: number, ts: number) => {
+    if (!autoPov) return;
+    const dt = ts - lastHeadingTsRef.current;
+    if (lastHeadingTsRef.current === 0) {
+      lastHeadingRef.current = newHeading;
+      lastHeadingTsRef.current = ts;
+      return;
+    }
+    if (dt < 1500) return;
+    const delta = Math.abs(((newHeading - lastHeadingRef.current + 540) % 360) - 180);
+    lastHeadingRef.current = newHeading;
+    lastHeadingTsRef.current = ts;
+    if (delta >= SHARP_TURN_DEG && povRef.current !== "tac") {
+      changePov("tac");
+      if (tacRevertTimerRef.current) clearTimeout(tacRevertTimerRef.current);
+      tacRevertTimerRef.current = setTimeout(() => changePov("fpv"), 6000);
+    }
+  };
+
   // Resolve real lat/lon for both endpoints (Nominatim async fallback)
   useEffect(() => {
     let cancelled = false;

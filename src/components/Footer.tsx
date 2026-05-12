@@ -1,15 +1,16 @@
+import Logo from "@/components/Logo";
+
 const Footer = () => {
   return (
-    <footer className="py-12 border-t border-border/50">
-      <div className="container">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-muted-foreground text-sm">
-            Altos — Advanced Low Altitude Traffic Operation System
-          </p>
-          <p className="text-muted-foreground text-xs font-mono">
-            © {new Date().getFullYear()} Altos. All rights reserved.
-          </p>
-        </div>
+    <footer className="relative border-t border-white/5 mt-24">
+      <div className="container py-10 flex flex-col md:flex-row items-center justify-between gap-6">
+        <Logo size={20} compact />
+        <p className="text-[11px] font-mono tracking-widest uppercase text-foreground/40">
+          Advanced Low Altitude Traffic Operation System
+        </p>
+        <p className="text-[11px] font-mono text-foreground/40">
+          © {new Date().getFullYear()} ALTOS
+        </p>
       </div>
     </footer>
   );

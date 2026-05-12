@@ -6,6 +6,16 @@ import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { FlightAudio, haptic } from "@/lib/flightAudio";
 import { supabase } from "@/integrations/supabase/client";
+import HudOverlay, { type PovMode } from "@/components/flight-plan/HudOverlay";
+
+// POV camera presets
+const POV_PRESET: Record<PovMode, { pitch: number; zoom: number }> = {
+  fpv: { pitch: 72, zoom: 16.2 },   // first-person, low & forward
+  tac: { pitch: 35, zoom: 14.2 },   // tactical / third-person top-down-ish
+  hyb: { pitch: 60, zoom: 15 },     // hybrid (current default)
+};
+const POV_COOLDOWN_MS = 4000;
+const SHARP_TURN_DEG = 35; // heading delta over short window triggers TAC
 
 interface Props {
   data: FlightPlanData;

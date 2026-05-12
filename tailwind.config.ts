@@ -14,8 +14,12 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["Space Grotesk", "system-ui", "sans-serif"],
+        sans: ["Inter", "system-ui", "-apple-system", "sans-serif"],
         mono: ["JetBrains Mono", "monospace"],
+        display: ["Inter", "system-ui", "sans-serif"],
+      },
+      letterSpacing: {
+        tightest: "-0.04em",
       },
       colors: {
         border: "hsl(var(--border))",

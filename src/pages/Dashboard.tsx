@@ -559,6 +559,49 @@ export default function Dashboard() {
               </div>
             </motion.div>
 
+            {/* ── Row 4: Historical Flights ── */}
+            <motion.div variants={fade}>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-sm font-semibold">Historical Flights</h2>
+                <span className="text-[10px] font-mono text-muted-foreground/60 uppercase tracking-wider">
+                  {historical.length} archived
+                </span>
+              </div>
+              <div className="rounded-2xl border border-border/40 bg-card/10 backdrop-blur-sm overflow-hidden">
+                {historical.length === 0 ? (
+                  <div className="p-8 text-center">
+                    <p className="text-xs font-mono text-muted-foreground">
+                      No completed flights yet — landed flights will appear here for analytics.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-border/20">
+                    {historical.slice(0, 8).map((h) => (
+                      <div key={h.id} className="flex items-center gap-4 px-5 py-3 hover:bg-secondary/10 transition-colors">
+                        <ScoreRing score={h.trajectory_score ?? 0} size={36} />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 text-sm">
+                            <span className="truncate font-medium text-foreground/80">{h.origin}</span>
+                            <ArrowRight className="w-3 h-3 text-muted-foreground shrink-0" />
+                            <span className="truncate text-foreground/60">{h.destination}</span>
+                          </div>
+                          <p className="text-[11px] font-mono text-muted-foreground mt-0.5">
+                            {h.aircraft_id || "—"} · {h.weather_risk ?? "n/a"}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[11px] font-mono text-muted-foreground">Landed</p>
+                          <p className="text-[11px] font-mono text-foreground/70">
+                            {new Date(h.landed_at ?? h.archived_at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+
           </motion.div>
         </main>
       </div>

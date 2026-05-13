@@ -27,11 +27,29 @@ interface FlightRecord {
   created_at: string;
 }
 
+interface HistoricalFlight {
+  id: string;
+  aircraft_id: string;
+  origin: string;
+  destination: string;
+  trajectory_score: number;
+  weather_risk: string | null;
+  conflicts: number;
+  scheduled_departure: string | null;
+  landed_at: string | null;
+  archived_at: string;
+}
+
 const STATUS_CONFIG: Record<string, { label: string; color: string; dot: string }> = {
   pending:   { label: "Pending",   color: "text-amber-400",   dot: "bg-amber-400" },
+  scheduled: { label: "Scheduled", color: "text-sky-400",     dot: "bg-sky-400" },
   approved:  { label: "Approved",  color: "text-emerald-400", dot: "bg-emerald-400" },
+  boarding:  { label: "Boarding",  color: "text-violet-400",  dot: "bg-violet-400 animate-pulse" },
+  in_air:    { label: "In Air",    color: "text-cyan-400",    dot: "bg-cyan-400 animate-pulse" },
   active:    { label: "Active",    color: "text-cyan-400",    dot: "bg-cyan-400 animate-pulse" },
   analyzing: { label: "Analyzing", color: "text-blue-400",    dot: "bg-blue-400 animate-pulse" },
+  landed:    { label: "Landed",    color: "text-zinc-400",    dot: "bg-zinc-400" },
+  archived:  { label: "Archived",  color: "text-zinc-500",    dot: "bg-zinc-500" },
   completed: { label: "Completed", color: "text-zinc-500",    dot: "bg-zinc-500" },
 };
 
@@ -152,6 +170,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [flights, setFlights]         = useState<FlightRecord[]>([]);
+  const [historical, setHistorical]   = useState<HistoricalFlight[]>([]);
   const [loadingFlights, setLoadingFlights] = useState(true);
   const [decisions, setDecisions]     = useState<{ decision: string; count: number }[]>([]);
   const [activeNav, setActiveNav]     = useState("overview");
@@ -172,14 +191,26 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!user && !BYPASS_AUTH) return;
+    // Active flights only — exclude landed/archived
     supabase
       .from("flight_intents")
       .select("id,aircraft_id,origin,destination,trajectory_score,status,weather_risk,conflicts,created_at")
+      .not("status", "in", "(landed,archived)")
       .order("created_at", { ascending: false })
       .limit(12)
       .then(({ data, error }) => {
         if (!error) setFlights((data as FlightRecord[]) ?? []);
         setLoadingFlights(false);
+      });
+
+    // Historical / completed flights
+    supabase
+      .from("historical_flights")
+      .select("id,aircraft_id,origin,destination,trajectory_score,weather_risk,conflicts,scheduled_departure,landed_at,archived_at")
+      .order("archived_at", { ascending: false })
+      .limit(20)
+      .then(({ data }) => {
+        if (data) setHistorical(data as HistoricalFlight[]);
       });
 
     supabase.from("flight_decisions").select("decision").then(({ data }) => {
@@ -524,6 +555,49 @@ export default function Dashboard() {
                       </div>
                     </AnimatePresence>
                   </>
+                )}
+              </div>
+            </motion.div>
+
+            {/* ── Row 4: Historical Flights ── */}
+            <motion.div variants={fade}>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-sm font-semibold">Historical Flights</h2>
+                <span className="text-[10px] font-mono text-muted-foreground/60 uppercase tracking-wider">
+                  {historical.length} archived
+                </span>
+              </div>
+              <div className="rounded-2xl border border-border/40 bg-card/10 backdrop-blur-sm overflow-hidden">
+                {historical.length === 0 ? (
+                  <div className="p-8 text-center">
+                    <p className="text-xs font-mono text-muted-foreground">
+                      No completed flights yet — landed flights will appear here for analytics.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-border/20">
+                    {historical.slice(0, 8).map((h) => (
+                      <div key={h.id} className="flex items-center gap-4 px-5 py-3 hover:bg-secondary/10 transition-colors">
+                        <ScoreRing score={h.trajectory_score ?? 0} size={36} />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 text-sm">
+                            <span className="truncate font-medium text-foreground/80">{h.origin}</span>
+                            <ArrowRight className="w-3 h-3 text-muted-foreground shrink-0" />
+                            <span className="truncate text-foreground/60">{h.destination}</span>
+                          </div>
+                          <p className="text-[11px] font-mono text-muted-foreground mt-0.5">
+                            {h.aircraft_id || "—"} · {h.weather_risk ?? "n/a"}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[11px] font-mono text-muted-foreground">Landed</p>
+                          <p className="text-[11px] font-mono text-foreground/70">
+                            {new Date(h.landed_at ?? h.archived_at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
             </motion.div>

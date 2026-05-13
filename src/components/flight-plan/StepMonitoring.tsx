@@ -755,6 +755,32 @@ const StepMonitoring = ({ data, updateData }: Props) => {
     };
   }, [mapReady, data.aircraftId, data.flightIntentId]);
 
+  // ── Flight lifecycle: in_air on activation, landed on arrival ────────────
+  useEffect(() => {
+    if (!data.monitoringActive || !data.flightIntentId) return;
+    supabase
+      .from("flight_intents")
+      .update({ status: "in_air" })
+      .eq("id", data.flightIntentId)
+      .then(() => { /* trigger handles archive on later landed update */ });
+  }, [data.monitoringActive, data.flightIntentId]);
+
+  const landedRef = useRef(false);
+  useEffect(() => {
+    if (landedRef.current) return;
+    if (progress < 1) return;
+    if (!data.flightIntentId) return;
+    landedRef.current = true;
+    supabase
+      .from("flight_intents")
+      .update({ status: "landed", landed_at: new Date().toISOString() })
+      .eq("id", data.flightIntentId)
+      .then(({ error }) => {
+        if (error) console.warn("[lifecycle] failed to mark landed:", error.message);
+        else console.info("[lifecycle] flight marked landed and archived");
+      });
+  }, [progress, data.flightIntentId]);
+
   // ── Idle screen ───────────────────────────────────────────────────────────
   if (!data.monitoringActive) {
     return (
